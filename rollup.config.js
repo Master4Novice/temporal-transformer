@@ -34,8 +34,8 @@ const config = [
         copy({
           targets: [
             { src: ["README.md", "MIGRATION.md", "LICENSE"], dest: "dist" },
-            { 
-              src: 'package.json', 
+            {
+              src: 'package.json',
               dest: 'dist',
               transform: (contents) => {
                 const pkg = JSON.parse(contents.toString());
@@ -49,7 +49,13 @@ const config = [
                   import: importType,
                   require: requireType,
                   types: types
-                }
+                };
+                // Strip fields that only matter for development; they bloat the
+                // installed tarball and confuse consumers who inspect node_modules.
+                delete pkg.scripts;
+                delete pkg.devDependencies;
+                delete pkg.publishConfig;
+                delete pkg.gitHead;
                 return JSON.stringify(pkg, null, 2);
               }
             }

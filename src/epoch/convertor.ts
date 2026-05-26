@@ -48,6 +48,31 @@ function localZone(): string {
   return DateTime.local().zoneName ?? 'UTC';
 }
 
+/**
+ * Convert an epoch timestamp (any unit) to a human-readable date in the
+ * caller's local timezone and GMT, with relative-time context.
+ *
+ * **Unique feature:** the unit (seconds / milliseconds / microseconds /
+ * nanoseconds) is auto-detected from the magnitude — you do not need to
+ * tell the library which unit your value is in.
+ *
+ * @param epoch  - Epoch value in any unit (seconds, ms, µs, or ns).
+ * @param format - Optional Luxon format string. Defaults to {@link DEFAULT_FORMAT}.
+ *                 Must contain only tokens from {@link SUPPORTED_FORMAT_TOKENS};
+ *                 unknown tokens throw {@link EpochError.FormatInvalid}.
+ *
+ * @returns Frozen {@link EpochToDate} object with both local and GMT renderings.
+ *
+ * @throws {EpochValidationError} If the input is null, undefined, NaN, Infinity,
+ *   a non-numeric string, or outside the recognized epoch magnitude range.
+ *
+ * @example
+ * ```ts
+ * convertEpoch(1622547800);    // auto-detects: seconds
+ * convertEpoch(1622547800000); // auto-detects: milliseconds
+ * convertEpoch(1622547800000, 'yyyy-MM-dd HH:mm:ss');
+ * ```
+ */
 export function convertEpoch(
   epoch: number,
   format: string = DEFAULT_FORMAT,
@@ -63,6 +88,20 @@ export function convertEpoch(
   return freeze({ timezone, dateTime, dateTimeInGMT, epochUnit, epoch, relative });
 }
 
+/**
+ * Convert a JavaScript `Date` object to epoch values in the given timezone.
+ *
+ * @param date     - Any valid `Date` instance.
+ * @param timezone - Optional IANA timezone (e.g. `"America/New_York"`).
+ *                   Defaults to the runtime's local timezone.
+ * @returns Frozen {@link DateToEpoch} with both epoch and human-readable forms.
+ * @throws {EpochValidationError} For invalid dates or unknown timezones.
+ *
+ * @example
+ * ```ts
+ * convertDateToEpoch(new Date(), 'Asia/Kolkata');
+ * ```
+ */
 export function convertDateToEpoch(
   date: Date,
   timezone: string = localZone(),
@@ -85,6 +124,21 @@ export function convertDateToEpoch(
   });
 }
 
+/**
+ * Format an epoch value in a specific IANA timezone. Auto-detects epoch unit.
+ *
+ * @param epoch    - Epoch in any unit (s / ms / µs / ns).
+ * @param timezone - IANA timezone, e.g. `"Asia/Tokyo"`.
+ * @param format   - Optional Luxon format string. Defaults to {@link DEFAULT_FORMAT}.
+ * @returns The formatted date as a string.
+ * @throws {EpochValidationError} For invalid epoch, timezone, or format token.
+ *
+ * @example
+ * ```ts
+ * convertEpochToTimezone(1622547800000, 'America/Los_Angeles', 'yyyy-MM-dd HH:mm:ss');
+ * // "2021-06-01 04:43:20"
+ * ```
+ */
 export function convertEpochToTimezone(
   epoch: number,
   timezone: string,
@@ -96,6 +150,24 @@ export function convertEpochToTimezone(
   return DateTime.fromMillis(epochInMilliseconds, { zone: timezone }).toFormat(format);
 }
 
+/**
+ * Auto-detect the unit of an epoch value (seconds / milliseconds /
+ * microseconds / nanoseconds) without performing the full conversion.
+ * Useful for routing logic: classify the input once, then process with
+ * a hot-path implementation.
+ *
+ * @param epoch - Numeric or numeric-string epoch value.
+ * @returns The detected {@link EpochUnit}.
+ * @throws {EpochValidationError} On invalid or out-of-range input.
+ *
+ * @example
+ * ```ts
+ * getEpochUnit(1622547800);          // EpochUnit.SECONDS
+ * getEpochUnit(1622547800000);       // EpochUnit.MILLI_SECONDS
+ * getEpochUnit(1622547800000000);    // EpochUnit.MICRO_SECONDS
+ * getEpochUnit(1622547800000000000); // EpochUnit.NANO_SECONDS
+ * ```
+ */
 export function getEpochUnit(epoch: number | string): EpochUnit {
   return getEpochUnitAndEpochInMiliseconds(epoch).epochUnit;
 }
@@ -105,6 +177,29 @@ export function getEpochUnit(epoch: number | string): EpochUnit {
 // and any payload that cannot appear in a real date string.
 const DATE_INPUT_RE = /^[0-9a-zA-Z\s\-\/:.TZ+,()]+$/;
 
+/**
+ * Parse a date string into epoch values, with strict timezone-aware parsing.
+ *
+ * Security: the input is character-allowlisted before being passed to Luxon
+ * (rejects HTML / XSS / shell metacharacters), capped at
+ * {@link MAX_INPUT_STRING_LENGTH} characters, and parsed in strict mode
+ * (no silent `Date()` fallback).
+ *
+ * @param input    - Date string to parse.
+ * @param format   - Optional Luxon format. If omitted, strict ISO 8601 is used.
+ * @param timezone - IANA timezone used to interpret the input. Defaults to local.
+ * @returns Frozen {@link DateToEpoch} with both epoch and human-readable forms.
+ * @throws {EpochValidationError} {@link EpochError.ParseError} for unparseable
+ *   input, {@link EpochError.InputTooLong} for inputs exceeding the length cap,
+ *   {@link EpochError.TimezoneError} for an unknown timezone, or
+ *   {@link EpochError.FormatInvalid} for an unsupported format token.
+ *
+ * @example
+ * ```ts
+ * parseToEpoch('2024-12-25T00:00:00Z');                     // ISO 8601 auto
+ * parseToEpoch('25/12/2024', 'dd/MM/yyyy', 'Europe/London'); // strict format
+ * ```
+ */
 export function parseToEpoch(
   input: string,
   format?: string,
@@ -145,6 +240,21 @@ export function parseToEpoch(
   });
 }
 
+/**
+ * Compute the calendar-accurate duration between two epochs.
+ *
+ * Years, months, days etc. are computed via Luxon's calendar-aware diff —
+ * not by dividing milliseconds. Both epochs auto-detect their unit.
+ *
+ * @throws {EpochValidationError} {@link EpochError.RangeError} when
+ *   `fromEpoch > toEpoch`.
+ *
+ * @example
+ * ```ts
+ * const d = getDurationBetween(1609459200000, 1622547800000);
+ * d.humanReadable; // "5 months, 11 hours, 43 minutes, 20 seconds"
+ * ```
+ */
 export function getDurationBetween(
   fromEpoch: number,
   toEpoch: number,
@@ -157,6 +267,22 @@ export function getDurationBetween(
   return freeze(parseDuration(fromMs, toMs));
 }
 
+/**
+ * Get the UTC offset for an IANA timezone, DST-aware.
+ *
+ * @param timezone - IANA timezone name.
+ * @param epoch    - Optional epoch (any unit) for a specific point in time.
+ *                   When omitted, uses the current moment.
+ * @returns Frozen {@link TimezoneOffset} with both string and minute forms.
+ * @throws {EpochValidationError} For unknown timezones.
+ *
+ * @example
+ * ```ts
+ * getTimezoneOffset('Asia/Kolkata');               // { offset: '+05:30', offsetMinutes: 330 }
+ * getTimezoneOffset('America/New_York');           // varies by DST
+ * getTimezoneOffset('America/New_York', someEpoch); // DST as of that instant
+ * ```
+ */
 export function getTimezoneOffset(
   timezone: string,
   epoch?: number,
@@ -185,6 +311,13 @@ const MODERN_CANONICAL_ZONES: ReadonlyArray<string> = [
   'America/Atikokan',
 ];
 
+/**
+ * Returns a defensive copy of the supported IANA timezone names. The list is
+ * sourced from `Intl.supportedValuesOf('timeZone')` augmented with modern
+ * canonical names that older ICU bundles still return as legacy aliases.
+ *
+ * @returns A fresh array — safe to mutate without affecting subsequent calls.
+ */
 export function getTimezoneList(): string[] {
   const intlList = typeof (Intl as any).supportedValuesOf === 'function'
     ? (Intl as any).supportedValuesOf('timeZone') as string[]
@@ -193,6 +326,15 @@ export function getTimezoneList(): string[] {
   return [...new Set([...intlList, ...MODERN_CANONICAL_ZONES, 'UTC'])];
 }
 
+/**
+ * Returns the current moment as epoch values plus ISO 8601 string and the
+ * detected local timezone.
+ *
+ * @returns Frozen {@link EpochNow} with seconds, milliseconds, ISO, timezone.
+ * @throws {EpochValidationError} {@link EpochError.ClockOutOfRange} if the
+ *   system clock returns a value outside `±MAX_EPOCH_MS` — guards against
+ *   clock corruption / sandbox edge cases.
+ */
 export function getEpochNow(): EpochNow {
   const milliseconds = Date.now();
   if (!isFinite(milliseconds) || milliseconds < MIN_EPOCH_MS || milliseconds > MAX_EPOCH_MS) {

@@ -5,6 +5,10 @@ import {
 } from '../errors/EpochValidationError.js';
 import { ParsedDuration } from '../types/index.js';
 
+function plural(n: number, label: string): string {
+  return `${n} ${label}${n === 1 ? '' : 's'}`;
+}
+
 export function getRelativeTimeDifference(epochMillis: number): string {
   const currentTimeMillis = Date.now();
   const diffMillis = currentTimeMillis - epochMillis;
@@ -19,26 +23,31 @@ export function getRelativeTimeDifference(epochMillis: number): string {
   const isFuture = diffMillis < 0;
   const suffix = isFuture ? ' from now' : ' ago';
 
-  if (diffSeconds <= 60) {
-    return `${Math.floor(diffSeconds)} seconds${suffix}`;
-  } else if (diffMinutes <= 60) {
-    return `${Math.floor(diffMinutes)} minutes${suffix}`;
-  } else if (diffHours <= 24) {
+  // Strict-less-than boundaries: exactly 60s rolls to minutes, exactly
+  // 60min to hours, etc. This is the stable bucketing — previously the
+  // 1-minute boundary was nondeterministic on fast machines.
+  if (diffSeconds < 60) {
+    return `${plural(Math.floor(diffSeconds), 'second')}${suffix}`;
+  } else if (diffMinutes < 60) {
+    return `${plural(Math.floor(diffMinutes), 'minute')}${suffix}`;
+  } else if (diffHours < 24) {
     const hours = Math.floor(diffHours);
     const minutes = Math.floor(diffMinutes % 60);
-    return `${hours} hours ${minutes} minutes${suffix}`;
-  } else if (diffDays <= 30) {
+    return `${plural(hours, 'hour')} ${plural(minutes, 'minute')}${suffix}`;
+  } else if (diffDays < 30) {
     const days = Math.floor(diffDays);
     const hours = Math.floor(diffHours % 24);
-    return `${days} days ${hours} hours${suffix}`;
-  } else if (diffMonths <= 12) {
+    return `${plural(days, 'day')} ${plural(hours, 'hour')}${suffix}`;
+  } else if (diffMonths < 12) {
     const months = Math.floor(diffMonths);
     const days = Math.floor(diffDays % 30);
-    return `${months} months ${days} days${suffix}`;
+    return `${plural(months, 'month')} ${plural(days, 'day')}${suffix}`;
   } else {
     const years = Math.floor(diffYears);
-    const months = Math.floor((diffDays % 365) / 30);
-    return `${years} years ${months} months${suffix}`;
+    // Cap months at 11 — using 30-day months, the remainder can otherwise
+    // round up to 12 near year boundaries (e.g. 4y 364d → "4 years 12 months").
+    const months = Math.min(11, Math.floor((diffDays % 365) / 30));
+    return `${plural(years, 'year')} ${plural(months, 'month')}${suffix}`;
   }
 }
 
@@ -52,6 +61,22 @@ export function validateMomentDate(date: any): void {
   }
 }
 
+/**
+ * Render a duration (in milliseconds) as a human-readable string.
+ * Pluralizes correctly ("1 second" vs "2 seconds") and omits zero parts.
+ * Sub-second durations fall back to `"0 seconds"`. Negative input is
+ * treated as positive (absolute value).
+ *
+ * @param milliseconds - Duration in milliseconds.
+ * @returns A pluralization-aware string like `"1 hour, 1 minute, 1 second"`.
+ *
+ * @example
+ * ```ts
+ * formatDuration(3661000);  // "1 hour, 1 minute, 1 second"
+ * formatDuration(86400000); // "1 day"
+ * formatDuration(500);      // "0 seconds"  (below 1s resolution)
+ * ```
+ */
 export function formatDuration(milliseconds: number): string {
   const abs = Math.abs(milliseconds);
   const d = Duration.fromMillis(abs).shiftTo(

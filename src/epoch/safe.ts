@@ -19,6 +19,10 @@ import {
   Result,
 } from '../types/index.js';
 
+/**
+ * Wrap a throwing call into a Result. Catches only EpochValidationError —
+ * unexpected errors (TypeError, OOM, etc.) propagate so real bugs surface.
+ */
 function wrap<T>(fn: () => T): Result<T, EpochValidationError> {
   try {
     return { ok: true, value: fn() };
@@ -28,6 +32,21 @@ function wrap<T>(fn: () => T): Result<T, EpochValidationError> {
   }
 }
 
+/**
+ * Result-style variant of {@link convertEpoch}. Never throws for validation
+ * errors — returns `{ ok: false, error }` instead. Ideal for handling
+ * untrusted input (API endpoints, form data, batch jobs).
+ *
+ * @example
+ * ```ts
+ * const r = safeConvertEpoch(req.body.timestamp);
+ * if (r.ok) {
+ *   console.log(r.value.dateTime);
+ * } else {
+ *   res.status(400).json({ error: r.error.message });
+ * }
+ * ```
+ */
 export function safeConvertEpoch(
   epoch: number,
   format?: string,
@@ -35,6 +54,7 @@ export function safeConvertEpoch(
   return wrap(() => convertEpoch(epoch, format));
 }
 
+/** Result-style variant of {@link convertDateToEpoch}. Never throws for validation errors. */
 export function safeConvertDateToEpoch(
   date: Date,
   timezone?: string,
@@ -42,6 +62,7 @@ export function safeConvertDateToEpoch(
   return wrap(() => convertDateToEpoch(date, timezone));
 }
 
+/** Result-style variant of {@link convertEpochToTimezone}. Never throws for validation errors. */
 export function safeConvertEpochToTimezone(
   epoch: number,
   timezone: string,
@@ -50,6 +71,7 @@ export function safeConvertEpochToTimezone(
   return wrap(() => convertEpochToTimezone(epoch, timezone, format));
 }
 
+/** Result-style variant of {@link parseToEpoch}. Never throws for validation errors. */
 export function safeParseToEpoch(
   input: string,
   format?: string,
@@ -58,6 +80,7 @@ export function safeParseToEpoch(
   return wrap(() => parseToEpoch(input, format, timezone));
 }
 
+/** Result-style variant of {@link getDurationBetween}. Never throws for validation errors. */
 export function safeGetDurationBetween(
   fromEpoch: number,
   toEpoch: number,
@@ -65,6 +88,7 @@ export function safeGetDurationBetween(
   return wrap(() => getDurationBetween(fromEpoch, toEpoch));
 }
 
+/** Result-style variant of {@link getTimezoneOffset}. Never throws for validation errors. */
 export function safeGetTimezoneOffset(
   timezone: string,
   epoch?: number,
@@ -72,10 +96,12 @@ export function safeGetTimezoneOffset(
   return wrap(() => getTimezoneOffset(timezone, epoch));
 }
 
+/** Result-style variant of {@link getEpochNow}. Never throws for clock-corruption errors. */
 export function safeGetEpochNow(): Result<EpochNow, EpochValidationError> {
   return wrap(() => getEpochNow());
 }
 
+/** Result-style variant of {@link getEpochUnit}. Never throws for validation errors. */
 export function safeGetEpochUnit(
   epoch: number | string,
 ): Result<EpochUnit, EpochValidationError> {

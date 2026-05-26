@@ -29,10 +29,11 @@ Working with epoch timestamps in TypeScript is surprisingly painful:
 
 ```typescript
 // No idea what unit this is? No problem.
-convertEpoch(1622547800);          // seconds  → "2021-06-01 23:13:20"
-convertEpoch(1622547800000);       // millis   → "2021-06-01 23:13:20"
-convertEpoch(1622547800000000);    // micros   → "2021-06-01 23:13:20"
-convertEpoch(1622547800000000000); // nanos    → "2021-06-01 23:13:20"
+// (All four resolve to the same instant — 2021-06-01T11:43:20Z. Display below in IST for illustration.)
+convertEpoch(1622547800).dateTime;          // seconds  → "2021-06-01 17:13:20.000"
+convertEpoch(1622547800000).dateTime;       // millis   → "2021-06-01 17:13:20.000"
+convertEpoch(1622547800000000).dateTime;    // micros   → "2021-06-01 17:13:20.000"
+convertEpoch(1622547800000000000).dateTime; // nanos    → "2021-06-01 17:13:20.000"
 ```
 
 ---
@@ -83,10 +84,10 @@ import {
 
 // Convert any epoch to a readable date — unit is auto-detected
 const result = convertEpoch(1622547800000);
-console.log(result.dateTime);      // "2021-06-01 23:13:20.000000" (local TZ)
-console.log(result.dateTimeInGMT); // "2021-06-01 17:43:20.000000"
+console.log(result.dateTime);      // e.g. "2021-06-01 17:13:20.000" (your local TZ — IST shown)
+console.log(result.dateTimeInGMT); // "2021-06-01 11:43:20.000"
 console.log(result.epochUnit);     // "milliseconds"
-console.log(result.relative);      // "3 years 11 months ago"
+console.log(result.relative);      // e.g. "4 years 11 months ago"
 
 // Convert a Date object to epoch values
 const epoch = convertDateToEpoch(new Date(), 'America/New_York');
@@ -172,10 +173,10 @@ function convertEpochToTimezone(epoch: number, timezone: string, format?: string
 
 ```typescript
 convertEpochToTimezone(1622547800000, 'America/Los_Angeles', 'yyyy-MM-dd HH:mm:ss');
-// "2021-06-01 10:43:20"
+// "2021-06-01 04:43:20"  (PDT, UTC−7 in June)
 
 convertEpochToTimezone(1622547800000, 'Asia/Tokyo');
-// "2021-06-02 02:43:20.000000"
+// "2021-06-01 20:43:20.000"  (JST, UTC+9)
 ```
 
 ---
@@ -208,7 +209,7 @@ function parseToEpoch(input: string, format?: string, timezone?: string): DateTo
 | Parameter  | Type                    | Default               | Description                                          |
 |------------|-------------------------|-----------------------|------------------------------------------------------|
 | `input`    | `string`                | —                     | Date string to parse                                 |
-| `format`   | `string` or `undefined` | Auto (ISO 8601)       | [Moment.js format string](https://momentjs.com/docs/#/parsing/string-format/) |
+| `format`   | `string` or `undefined` | Auto (ISO 8601)       | [Luxon format token](https://moment.github.io/luxon/#/parsing?id=table-of-tokens-1) (validated against `SUPPORTED_FORMAT_TOKENS`) |
 | `timezone` | `string`                | System local timezone | IANA timezone to interpret the date in               |
 
 **Returns:** [`DateToEpoch`](#datetepoch)

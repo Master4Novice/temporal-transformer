@@ -99,6 +99,20 @@ export function validTimezone(timezone: string): void {
   }
 }
 
+/**
+ * Safe predicate: returns `true` if the input is a recognized epoch
+ * value in any supported unit, `false` otherwise. Never throws.
+ *
+ * Use this for cheap input validation when you don't need the Result-style API.
+ *
+ * @example
+ * ```ts
+ * isValidEpoch(1622547800000); // true
+ * isValidEpoch(null);          // false
+ * isValidEpoch(Infinity);      // false
+ * isValidEpoch('not a num');   // false
+ * ```
+ */
 export function isValidEpoch(epoch: unknown): boolean {
   try {
     getEpochUnitAndEpochInMiliseconds(epoch);
@@ -108,6 +122,17 @@ export function isValidEpoch(epoch: unknown): boolean {
   }
 }
 
+/**
+ * Safe predicate: returns `true` if the timezone is a recognized IANA name,
+ * `false` otherwise. Never throws.
+ *
+ * @example
+ * ```ts
+ * isValidTimezone('UTC');           // true
+ * isValidTimezone('Asia/Kolkata');  // true
+ * isValidTimezone('Fake/Zone');     // false
+ * ```
+ */
 export function isValidTimezone(timezone: string): boolean {
   try {
     validTimezone(timezone);
