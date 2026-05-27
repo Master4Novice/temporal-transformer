@@ -2,7 +2,6 @@ import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 import copy from 'rollup-plugin-copy';
 import resolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
 
 const config = [
   {
@@ -22,7 +21,10 @@ const config = [
     external: [ '@types/node', '@types/luxon', 'luxon', 'typescript' ],
     plugins: [
         resolve(),
-        terser(),
+        // Note: not minifying with terser. The serialize-javascript dep in
+        // @rollup/plugin-terser breaks on Node 18 and on Windows. The bundle
+        // is already tiny (~8KB ESM); downstream bundlers minify in apps that
+        // need it.
         typescript({
           tsconfig: 'tsconfig.json',
           // The dts step below uses rollup-plugin-dts to emit a single

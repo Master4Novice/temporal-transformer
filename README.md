@@ -655,6 +655,14 @@ console.log(`Job ran for ${duration.humanReadable}`);
 
 ## Changelog
 
+### 2.0.2
+
+- **CI fix:** Build now succeeds on Node 18 and on all Windows runners. The `@rollup/plugin-terser` dependency was transitively pulling `serialize-javascript` which calls `crypto.randomUUID()` from globals at module load — this throws `ReferenceError: crypto is not defined` in Node 18 CJS contexts and on Windows runners. Dropped the terser plugin entirely; the bundle is still tiny (~7.5 KB gzipped). Downstream bundlers can re-minify if needed.
+- **CI:** Workflow now triggers on `master`, `main`, and `v1.x-maintenance` (was only `main`). Added `workflow_dispatch` for manual runs.
+- **CI:** Set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` to silence the Node 20 deprecation warning ahead of the 2026-09-16 removal.
+- **DX:** Test scripts are now cross-platform. Added `cross-env` for `TZ=UTC` and simplified jest invocations to rely on `jest.config.mjs` for ignore patterns.
+- **No runtime API changes** — drop-in upgrade from 2.0.1.
+
 ### 2.0.1
 
 - **Docs:** Repository, homepage, and bug-tracker URLs now point at the new public single-package repos at [Master4Novice/temporal-transformer](https://github.com/Master4Novice/temporal-transformer) and [Master4Novice/temporal-transformer-codemod](https://github.com/Master4Novice/temporal-transformer-codemod) (previously pointed at a private monorepo).
