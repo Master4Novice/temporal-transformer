@@ -6,13 +6,19 @@
 [![License: MIT](https://img.shields.io/npm/l/%40master4n%2Ftemporal-transformer)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/node/v/%40master4n%2Ftemporal-transformer)](https://nodejs.org/)
-[![Bundle](https://img.shields.io/bundlephobia/minzip/%40master4n%2Ftemporal-transformer)](https://bundlephobia.com/package/@master4n/temporal-transformer)
-[![Treeshakeable](https://img.shields.io/badge/Treeshakeable-Partial-yellow)](#bundle-size-considerations)
+[![Gzipped size](https://img.shields.io/badge/gzipped-7.5%20KB-brightgreen)](./bench/RESULTS.md)
+[![Tests](https://img.shields.io/badge/tests-194%20passing-brightgreen)](https://github.com/Master4Novice/temporal-transformer/actions/workflows/ci.yml)
 [![Owner](https://img.shields.io/badge/Owner-Master4Novice-orange)](https://github.com/Master4Novice)
 
 **Convert any epoch timestamp to a human-readable date in TypeScript — auto-detects seconds, milliseconds, microseconds, and nanoseconds with zero configuration.** Also converts date strings to epoch, computes calendar-accurate durations, and handles any IANA timezone.
 
-> **v2.0 is out.** Engine swapped from moment.js to [Luxon](https://moment.github.io/luxon/) — same API, ~60% smaller bundle (~71 KB vs ~180 KB), no maintenance-mode dependency. Upgrade with `npm i @master4n/temporal-transformer@2` and run `npx @master4n/temporal-transformer-codemod ./src` to migrate format strings automatically. See [MIGRATION.md](./MIGRATION.md).
+> **v2.x is the current line.** Engine swapped from moment.js to [Luxon](https://moment.github.io/luxon/) — same API, ~60% smaller bundle (~71 KB vs ~180 KB), no maintenance-mode dependency. Upgrading from v1.x is a **one-command** migration thanks to the companion codemod:
+>
+> ```bash
+> npx @master4n/temporal-transformer-codemod --update-deps ./
+> ```
+>
+> The codemod rewrites every moment-style format string in your source (`YYYY-MM-DD` → `yyyy-MM-dd`, `dddd` → `cccc`, `[literal]` → `'literal'`, etc.), handles untranslatable tokens with stderr warnings, AND bumps `@master4n/temporal-transformer` in every `package.json` it finds to `^2.0.2`. See [MIGRATION.md](./MIGRATION.md) for the full upgrade story; [codemod repo](https://github.com/Master4Novice/temporal-transformer-codemod) for the tool itself.
 
 ---
 
@@ -654,6 +660,12 @@ console.log(`Job ran for ${duration.humanReadable}`);
 ---
 
 ## Changelog
+
+### 2.0.3
+
+- **Docs:** Top-of-README callout updated to highlight the companion codemod's new one-command migration (`npx @master4n/temporal-transformer-codemod --update-deps ./`). The codemod (currently `2.0.3`) now also bumps `@master4n/temporal-transformer` to `^2.0.2` in every `package.json` it finds, in addition to rewriting format strings.
+- **Docs:** Replaced unreliable bundlephobia badge with a static gzipped-size badge (`7.5 KB`) linking to `bench/RESULTS.md`. Added a "tests passing" badge.
+- **No code change** — runtime behavior identical to 2.0.2.
 
 ### 2.0.2
 
