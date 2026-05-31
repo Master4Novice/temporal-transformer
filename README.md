@@ -126,13 +126,20 @@ console.log(isValidEpoch(Infinity));      // false
 
 Converts any epoch value to a human-readable date. **Automatically detects the epoch unit** (seconds / milliseconds / microseconds / nanoseconds).
 
+> **Pass a whole number.** Auto-detection keys off the integer magnitude.
+> Fractional epochs (e.g. `1622547800.5`) are **rejected** with
+> `EpochError.NotAnInteger` rather than silently misclassified — pass whole
+> seconds / ms / µs / ns. Detection is unambiguous for the ranges callers hit in
+> practice (seconds up to ~year 2286; ms from ~Apr 1970 on); convert any value
+> outside those bands to milliseconds yourself before calling.
+
 ```typescript
 function convertEpoch(epoch: number, format?: string): EpochToDate
 ```
 
 | Parameter | Type     | Default                        | Description                     |
 |-----------|----------|--------------------------------|---------------------------------|
-| `epoch`   | `number` | —                              | Epoch value in any unit         |
+| `epoch`   | `number` | —                              | Integer epoch value in any unit |
 | `format`  | `string` | `'yyyy-MM-dd HH:mm:ss.SSS'`   | [Luxon format token](https://moment.github.io/luxon/#/formatting?id=table-of-tokens) (validated against `SUPPORTED_FORMAT_TOKENS`) |
 
 **Returns:** [`EpochToDate`](#epochtodate)
@@ -660,6 +667,17 @@ console.log(`Job ran for ${duration.humanReadable}`);
 ---
 
 ## Changelog
+
+### 2.0.4
+
+- **Fix (correctness):** fractional epochs are now **rejected** with the new
+  `EpochError.NotAnInteger` instead of being silently misclassified. Previously
+  the validator stripped the decimal point and re-ran unit auto-detection, so
+  `convertEpoch(1622547800.5)` returned a **1970** date (read as `16225478005`
+  ms) instead of throwing. Integer epochs are unaffected. The Result-API
+  variants (`safeConvertEpoch`, …) return `{ ok: false, error }` as usual.
+- **Docs:** documented the integer requirement and the auto-detection's
+  supported magnitude range on `convertEpoch`.
 
 ### 2.0.3
 

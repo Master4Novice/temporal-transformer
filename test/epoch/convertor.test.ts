@@ -48,6 +48,13 @@ describe('convertEpoch', () => {
     it('should throw error', () => {
         expect(() => convertEpoch(epoch * 1e7, format)).toThrow('Invalid Epoch Unit');
     });
+
+    it('should reject fractional epochs instead of silently misclassifying them', () => {
+        // Regression: 1622547800.5 used to be read as 16225478005 ms (a 1970
+        // date) by stripping the decimal. Fractional epochs are now rejected.
+        expect(() => convertEpoch(1622547800.5, format)).toThrow('Whole Number');
+        expect(() => convertEpoch(epoch / 1e3 + 0.5, format)).toThrow('Whole Number');
+    });
 });
 
 describe('convertDateToEpoch', () => {

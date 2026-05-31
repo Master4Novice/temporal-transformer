@@ -1,6 +1,6 @@
 {
   "name": "@master4n/temporal-transformer",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "TypeScript library to convert epoch timestamps (seconds, milliseconds, microseconds, nanoseconds) to human-readable dates, parse date strings to epoch, compute calendar-accurate durations, and handle IANA timezones. Powered by Luxon — small bundle, immutable, no moment.js.",
   "main": "./dist/commonjs/index.cjs",
   "module": "./dist/esm/index.js",

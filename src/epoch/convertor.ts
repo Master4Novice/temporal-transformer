@@ -56,7 +56,15 @@ function localZone(): string {
  * nanoseconds) is auto-detected from the magnitude — you do not need to
  * tell the library which unit your value is in.
  *
- * @param epoch  - Epoch value in any unit (seconds, ms, µs, or ns).
+ * **Must be a whole number.** Auto-detection works on the integer magnitude;
+ * fractional epochs (e.g. `1622547800.5`) are rejected with
+ * {@link EpochError.NotAnInteger} rather than silently misclassified. Pass whole
+ * seconds / ms / µs / ns. Auto-detection is unambiguous for the ranges callers
+ * hit in practice (seconds up to year ~2286, ms from ~Apr 1970 onward); a
+ * millisecond value before ~Apr 1970 or a seconds value past year 2286 falls in
+ * an adjacent band — convert such out-of-band values to milliseconds yourself.
+ *
+ * @param epoch  - Integer epoch value in any unit (seconds, ms, µs, or ns).
  * @param format - Optional Luxon format string. Defaults to {@link DEFAULT_FORMAT}.
  *                 Must contain only tokens from {@link SUPPORTED_FORMAT_TOKENS};
  *                 unknown tokens throw {@link EpochError.FormatInvalid}.
@@ -64,7 +72,8 @@ function localZone(): string {
  * @returns Frozen {@link EpochToDate} object with both local and GMT renderings.
  *
  * @throws {EpochValidationError} If the input is null, undefined, NaN, Infinity,
- *   a non-numeric string, or outside the recognized epoch magnitude range.
+ *   a non-numeric string, a non-integer (fractional) value, or outside the
+ *   recognized epoch magnitude range.
  *
  * @example
  * ```ts

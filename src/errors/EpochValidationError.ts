@@ -1,6 +1,7 @@
 export enum EpochError {
   UndefinedOrNull = 'Epoch Is Undefined Or Null',
   NotANumber = 'Epoch Is Not A Number Or Cannot Be Parsed As A Number',
+  NotAnInteger = 'Epoch Must Be A Whole Number (Fractional Epochs Are Ambiguous — Pass Integer Seconds / Milliseconds / Microseconds / Nanoseconds)',
   OutOfRange = 'Epoch Is Out Of The Valid Range',
   EpochUnit = 'Invalid Epoch Unit',
   Empty = 'Epoch Is Empty',

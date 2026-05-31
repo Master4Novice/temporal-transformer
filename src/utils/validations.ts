@@ -49,12 +49,14 @@ function validateEpoch(epoch: any): number {
     throw new EpochValidationError(EpochError.NotANumber);
   }
 
+  // Reject fractional epochs. A value like `1622547800.5` is ambiguous: its
+  // magnitude says "seconds", but there is no safe, surprise-free way to fold a
+  // sub-unit fraction into an integer-unit auto-detection scheme. (The previous
+  // behaviour stripped the decimal point and re-detected the unit, turning
+  // 1622547800.5 into 16225478005 → a 1970 millisecond timestamp.) Callers
+  // should pass whole seconds / ms / µs / ns.
   if (!Number.isInteger(epoch)) {
-    const str = epoch.toString();
-    const dotIndex = str.indexOf('.');
-    if (dotIndex === -1) return Math.round(epoch);
-    const fractionLength = str.length - dotIndex - 1;
-    epoch = Math.round(epoch * Math.pow(10, fractionLength));
+    throw new EpochValidationError(EpochError.NotAnInteger);
   }
   return epoch;
 }

@@ -42,13 +42,15 @@ describe('getEpochUnitAndEpochInMiliseconds', () => {
         expect(1722093244504).toBe(data.epochInMilliseconds);
     });
 
-    test('should handle fractional numbers correctly', () => {
-        expect(getEpochUnitAndEpochInMiliseconds("123.4567891").epochInMilliseconds).toBe(1234567891000);
+    test('should reject fractional epochs (ambiguous) with NotAnInteger', () => {
+        expect(() => getEpochUnitAndEpochInMiliseconds("123.4567891")).toThrow(new EpochValidationError(EpochError.NotAnInteger));
+        expect(() => getEpochUnitAndEpochInMiliseconds(1622547800.5)).toThrow(new EpochValidationError(EpochError.NotAnInteger));
+        expect(() => getEpochUnitAndEpochInMiliseconds("-123.4561203")).toThrow(new EpochValidationError(EpochError.NotAnInteger));
     });
 
-    test('should convert string numbers to number', () => {
+    test('should convert integer string numbers to number', () => {
         expect(getEpochUnitAndEpochInMiliseconds("1234567890").epochInMilliseconds).toBe(1234567890000);
-        expect(getEpochUnitAndEpochInMiliseconds("-123.4561203").epochInMilliseconds).toBe(-1234561203000);
+        expect(getEpochUnitAndEpochInMiliseconds("-1234567890").epochInMilliseconds).toBe(-1234567890000);
     });
 
     test('should throw error when epoch is not a number or cannot be parsed as a number', () => {

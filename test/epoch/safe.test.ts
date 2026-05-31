@@ -41,6 +41,14 @@ describe('safeConvertEpoch', () => {
       expect(r.error.message).toBe(EpochError.NotANumber);
     }
   });
+
+  test('returns ok:false on a fractional epoch', () => {
+    const r = safeConvertEpoch(1622547800.5);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.error.message).toBe(EpochError.NotAnInteger);
+    }
+  });
 });
 
 describe('safeConvertDateToEpoch', () => {
