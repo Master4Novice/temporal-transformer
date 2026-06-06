@@ -35,7 +35,7 @@ const config = [
         }),
         copy({
           targets: [
-            { src: ["README.md", "MIGRATION.md", "LICENSE"], dest: "dist" },
+            { src: ["README.md", "MIGRATION.md", "LICENSE", "llms.txt"], dest: "dist" },
             {
               src: 'package.json',
               dest: 'dist',
