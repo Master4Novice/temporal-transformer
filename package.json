@@ -1,6 +1,6 @@
 {
   "name": "@master4n/temporal-transformer",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "TypeScript library to convert epoch timestamps (seconds, milliseconds, microseconds, nanoseconds) to human-readable dates, parse date strings to epoch, compute calendar-accurate durations, and handle IANA timezones. Powered by Luxon — small bundle, immutable, no moment.js.",
   "main": "./dist/commonjs/index.cjs",
   "module": "./dist/esm/index.js",
@@ -17,7 +17,7 @@
     "format": "prettier --write src/**/*.ts",
     "build": "npm run clean && rollup --config",
     "test": "jest",
-    "test:golden": "cross-env TZ=UTC jest --testPathPattern=test/golden --testPathIgnorePatterns=/node_modules/",
+    "test:golden": "cross-env TZ=UTC jest --testPathPatterns=test/golden --testPathIgnorePatterns=/node_modules/",
     "test:coverage": "jest --coverage",
     "bench": "npm run build && node bench/bench.mjs",
     "bench:no-build": "node bench/bench.mjs"
@@ -80,18 +80,21 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "cross-env": "^7.0.3",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.0.0",
-    "babel-jest": "^29.7.0",
-    "jest": "^29.7.0",
+    "babel-jest": "^30.4.1",
+    "jest": "^30.4.2",
     "rimraf": "^6.1.3",
     "rollup": "^4.60.4",
-    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-dts": "^6.4.1",
-    "ts-jest": "^29.3.0",
+    "ts-jest": "^29.4.11",
     "tslib": "^2.8.1",
     "typescript": "^5.8.3"
   },
-  "gitHead": "4efbfe6b5967b5aed3aae79794c4da3d67ecf118"
+  "overrides": {
+    "test-exclude": "^8.0.0",
+    "js-yaml": "^4.2.0",
+    "glob": "^13.0.6"
+  }
 }

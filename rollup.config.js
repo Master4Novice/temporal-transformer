@@ -1,7 +1,38 @@
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
-import copy from 'rollup-plugin-copy';
 import resolve from '@rollup/plugin-node-resolve';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+
+// Inline replacement for rollup-plugin-copy (unmaintained; pulled deprecated
+// glob@7 + inflight transitively). Copies static assets into dist/ and writes a
+// publish-ready package.json after the bundle is written.
+function copyDistAssets() {
+  return {
+    name: 'copy-dist-assets',
+    closeBundle() {
+      mkdirSync('dist', { recursive: true });
+      for (const file of ['README.md', 'MIGRATION.md', 'LICENSE', 'llms.txt']) {
+        copyFileSync(file, `dist/${file}`);
+      }
+      const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+      const importType = './esm/index.js';
+      const requireType = './commonjs/index.cjs';
+      const types = './index.d.ts';
+      pkg.main = requireType;
+      pkg.module = importType;
+      pkg.types = types;
+      pkg.exports = { import: importType, require: requireType, types };
+      // Strip fields that only matter for development; they bloat the installed
+      // tarball and confuse consumers who inspect node_modules.
+      delete pkg.scripts;
+      delete pkg.devDependencies;
+      delete pkg.overrides; // dev-only npm resolution hints; inert for consumers
+      delete pkg.publishConfig;
+      delete pkg.gitHead;
+      writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2));
+    },
+  };
+}
 
 const config = [
   {
@@ -33,36 +64,7 @@ const config = [
           declaration: false,
           declarationDir: undefined,
         }),
-        copy({
-          targets: [
-            { src: ["README.md", "MIGRATION.md", "LICENSE", "llms.txt"], dest: "dist" },
-            {
-              src: 'package.json',
-              dest: 'dist',
-              transform: (contents) => {
-                const pkg = JSON.parse(contents.toString());
-                const importType = "./esm/index.js";
-                const requireType = "./commonjs/index.cjs";
-                const types = "./index.d.ts";
-                pkg.main = requireType;
-                pkg.module = importType;
-                pkg.types = types;
-                pkg.exports = {
-                  import: importType,
-                  require: requireType,
-                  types: types
-                };
-                // Strip fields that only matter for development; they bloat the
-                // installed tarball and confuse consumers who inspect node_modules.
-                delete pkg.scripts;
-                delete pkg.devDependencies;
-                delete pkg.publishConfig;
-                delete pkg.gitHead;
-                return JSON.stringify(pkg, null, 2);
-              }
-            }
-          ]
-        })
+        copyDistAssets()
     ]
   }, {
     input: 'src/index.ts',
